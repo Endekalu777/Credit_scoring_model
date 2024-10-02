@@ -7,6 +7,8 @@ from scipy.stats import stats
 class EDA():
     def __init__(self, filepath):
         self.df = pd.read_csv(filepath)
+        self.numerical_cols = ['Amount', 'Value', 'PricingStrategy', 'FraudResult']
+        self.numerical_data = self.df[self.numerical_cols]
 
     def overview(self):
         print(f"Shape of the dataset: {self.df.shape}\n")
@@ -21,14 +23,10 @@ class EDA():
         print("Statistical summary of the dataset\n")
         display(self.df.describe())
 
-        # Filter to include only numeric columns
-        numerical_cols = ['Amount', 'Value', 'PricingStrategy', 'FraudResult']
-        numeric_data = self.df[numerical_cols]
-
         # Understand shape of distribution
         shape = {
-                'Skewness': numeric_data.apply(stats.skew),
-                'Kurtosis': numeric_data.apply(stats.kurtosis)
+                'Skewness': self.numerical_data.apply(stats.skew),
+                'Kurtosis': self.numerical_data.apply(stats.kurtosis)
                 }
         
         # Print each column's skewness and kurtosis with proper formatting
