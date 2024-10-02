@@ -14,6 +14,11 @@ class EDA():
         display(self.df.head())
         print("Data types of the dataset")
         display(self.df.dtypes)
+        print("Missing values of the dataset: ")
+        display(self.df.isnull().sum())
     
+
+
+
 
 
