@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 from IPython.display import display
 from scipy.stats import stats
@@ -11,7 +12,7 @@ warnings.filterwarnings("ignore")
 class EDA():
     def __init__(self, filepath):
         self.df = pd.read_csv(filepath)
-        self.numerical_cols = ['Amount', 'Value', 'PricingStrategy', 'FraudResult']
+        self.numerical_cols = ['Amount', 'Value']
         self.numerical_data = self.df[self.numerical_cols]
 
     def overview(self):
@@ -67,7 +68,8 @@ class EDA():
     def categorical_distribution(self):
         # List of categorical columns to analyze
         categorical_cols = [
-            'CurrencyCode', 'ProviderId', 'ProductCategory', 'ChannelId'
+            'CurrencyCode', 'ProviderId', 'ProductCategory', 'ChannelId',
+            'PricingStrategy', 'FraudResult'
         ]
 
         # Set up the matplotlib figure
@@ -91,6 +93,27 @@ class EDA():
 
         # Set title and labels
         plt.title('Correlation Matrix of Numerical Features', fontsize=16)
+        plt.show()
+
+    def log_transformation(self):
+        # Apply log transformation
+        self.df['Log_Amount'] = np.log1p(self.df['Amount'])
+        self.df['Log_Value'] = np.log1p(self.df['Value'])
+
+        # Visualize the transformation
+        plt.figure(figsize=(12, 5))
+
+        plt.subplot(121)
+        sns.histplot(self.df['Amount'], kde=True)
+        plt.title('Original Amount Distribution')
+        plt.xlabel('Amount')
+
+        plt.subplot(122)
+        sns.histplot(self.df['Log_Amount'], kde=True)
+        plt.title('Log-Transformed Amount Distribution')
+        plt.xlabel('Log(Amount + 1)')
+
+        plt.tight_layout()
         plt.show()
 
 
