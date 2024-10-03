@@ -41,6 +41,21 @@ class EDA():
             for col, val in values.items():
                 print(f"{col}: {val}")
 
+    def handle_negative_values(self):
+        # Check how many negative values exist
+        negative_transactions= self.df[self.df['Amount'] < 0]
+        print(f"Number of negative values: {len(negative_transactions)}")
+
+        # Distribution of the negative values
+        sns.histplot(negative_transactions['Amount'], kde=True)
+        plt.title('Distribution of Negative Amount Values')
+        plt.show()
+
+        # Fraud status for negative transactions
+        sns.countplot(x='FraudResult', data=negative_transactions)
+        plt.title('Fraud Status for Negative Transactions')
+        plt.show()
+
     def visualize_distribution(self):
         # Plot histograms for each numerical feature
         self.numerical_data.hist(bins=30, figsize=(10, 8), layout=(3, 2))
