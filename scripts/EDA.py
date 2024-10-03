@@ -63,6 +63,27 @@ class EDA():
             plt.title(f'Density Plot of {col}')
         plt.tight_layout()
         plt.show()
+    
+    def categorical_distribution(self):
+        # List of categorical columns to analyze
+        categorical_cols = [
+            'CurrencyCode', 'ProviderId', 'ProductCategory', 'ChannelId'
+        ]
+
+        # Set up the matplotlib figure
+        plt.figure(figsize=(15, 20))
+
+        # Loop through the categorical columns and create a bar plot for each
+        for i, col in enumerate(categorical_cols, 1):
+            plt.subplot(len(categorical_cols), 1, i)
+            sns.countplot(y=col, data=self.df, order=self.df[col].value_counts().index)
+            plt.title(f'Distribution of {col}')
+            plt.xlabel('Count')
+            plt.ylabel(col)
+
+        plt.tight_layout()
+        plt.show()
+
 
     
 
