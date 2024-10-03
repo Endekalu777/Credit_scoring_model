@@ -84,8 +84,17 @@ class EDA():
         plt.tight_layout()
         plt.show()
 
+    def correlation_analysis(self):
+        corr_matrix = self.df[self.numerical_cols].corr()
+        plt.figure(figsize=(10, 8))
+        sns.heatmap(corr_matrix, annot=True, fmt=".2f", cmap='coolwarm', square=True, cbar=True)
 
-    
+        # Set title and labels
+        plt.title('Correlation Matrix of Numerical Features', fontsize=16)
+        plt.show()
+
+
+        
 
 
 
