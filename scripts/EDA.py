@@ -102,6 +102,7 @@ class EDA():
         plt.show()
 
     def correlation_analysis(self):
+        self.numerical_cols = ['Amount', 'Value', 'PricingStrategy', 'FraudResult']
         corr_matrix = self.df[self.numerical_cols].corr()
         plt.figure(figsize=(10, 8))
         sns.heatmap(corr_matrix, annot=True, fmt=".2f", cmap='coolwarm', square=True, cbar=True)
