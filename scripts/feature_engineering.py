@@ -25,6 +25,18 @@ class feature_engineering():
         plt.title('Top 20 Customers by Total Transaction Amount')
         plt.show()
 
+    def extract_features(self):
+
+        # Convert the TransactionStartTime column to datetime
+        self.df['TransactionStartTime'] = pd.to_datetime(self.df['TransactionStartTime'])
+
+        # Extract hour, day, month, and year
+        self.df['Transaction_Hour'] = self.df['TransactionStartTime'].dt.hour
+        self.df['Transaction_Day'] = self.df['TransactionStartTime'].dt.day
+        self.df['Transaction_Month'] = self.df['TransactionStartTime'].dt.month
+        self.df['Transaction_Year'] = self.df['TransactionStartTime'].dt.year
+
+        display((self.df[['Transaction_Hour', 'Transaction_Day', 'Transaction_Month', 'Transaction_Year']]).head())
 
 
 
