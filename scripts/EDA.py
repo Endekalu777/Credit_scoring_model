@@ -11,11 +11,20 @@ warnings.filterwarnings("ignore")
 
 class EDA():
     def __init__(self, filepath):
+        """
+        Initialize the EDA class with a CSV filepath.
+        Parameters:
+            filepath (str): The file path to the dataset.
+        """
         self.df = pd.read_csv(filepath)
         self.numerical_cols = ['Amount', 'Value']
         self.numerical_data = self.df[self.numerical_cols]
 
     def overview(self):
+        """
+        Provide an overview of the dataset structure, including shape, preview, 
+        data types, and missing values.
+        """
         print(f"Shape of the dataset: {self.df.shape}\n")
         print("Preview of the first 5 rows:")
         display(self.df.head())
@@ -25,6 +34,10 @@ class EDA():
         display(self.df.isnull().sum())
 
     def distribution(self):
+        """
+        Display statistical summary and calculate skewness and kurtosis
+        for numerical columns to understand distribution shape.
+        """
         print("Statistical summary of the dataset\n")
         display(self.df.describe())
 
@@ -42,7 +55,11 @@ class EDA():
                 print(f"{col}: {val}")
 
     def handle_negative_values(self):
-        # Check how many negative values exist
+        """
+        Identify and visualize negative values in the 'Amount' column, 
+        along with fraud status for negative transactions.
+        """
+        # Filter negative transactions
         negative_transactions= self.df[self.df['Amount'] < 0]
         print(f"Number of negative values: {len(negative_transactions)}")
 
@@ -57,6 +74,10 @@ class EDA():
         plt.show()
 
     def visualize_distribution(self):
+        """
+        Visualize the distribution of numerical features using histograms, 
+        boxplots, and density plots to detect patterns and potential outliers.
+        """
         # Plot histograms for each numerical feature
         self.numerical_data.hist(bins=30, figsize=(10, 8), layout=(3, 2))
         plt.tight_layout()
@@ -81,6 +102,10 @@ class EDA():
         plt.show()
     
     def categorical_distribution(self):
+        """
+        Analyze the distribution of categorical features using bar plots 
+        to understand the frequency of categories.
+        """
         # List of categorical columns to analyze
         categorical_cols = [
             'CurrencyCode', 'ProviderId', 'ProductCategory', 'ChannelId',
@@ -102,6 +127,10 @@ class EDA():
         plt.show()
 
     def correlation_analysis(self):
+        """
+        Perform correlation analysis on numerical features and visualize the 
+        correlation matrix using a heatmap to understand relationships.
+        """
         self.numerical_cols = ['Amount', 'Value', 'PricingStrategy', 'FraudResult']
         corr_matrix = self.df[self.numerical_cols].corr()
         plt.figure(figsize=(10, 8))
@@ -112,6 +141,10 @@ class EDA():
         plt.show()
 
     def log_transformation(self):
+        """
+        Apply log transformation to 'Amount' and 'Value' columns and 
+        visualize the effect of the transformation.
+        """
         # Apply log transformation
         self.df['Log_Amount'] = np.log1p(self.df['Amount'])
         self.df['Log_Value'] = np.log1p(self.df['Value'])
