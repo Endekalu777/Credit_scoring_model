@@ -1,5 +1,5 @@
 import pandas as pd
-from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import LabelEncoder, MinMaxScaler, StandardScaler
 from IPython.display import display
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -7,6 +7,7 @@ import seaborn as sns
 class feature_engineering():
     def __init__(self, filepath):
         self.df = pd.read_csv(filepath)
+        self.df.dropna(subset=['Value'], inplace=True)
 
     def aggregate_features(self):
         customer_aggregate = self.df.groupby('CustomerId').agg(
@@ -67,6 +68,16 @@ class feature_engineering():
         # Display the mappings for ProductCategory and CurrencyCode (first 5 rows)
         display(product_mapping.head())
         display(currency_mapping.head())
+
+    def normalize_numerical_feature(self):
+        # Normalize and standardize numerical features
+        scaler = MinMaxScaler()
+        self.df['Normalized_Amount'] = scaler.fit_transform(self.df[['Amount']])
+        # Normalize and standardize numerical features
+        scaler = StandardScaler()
+        self.df['Standardized_Amount'] = scaler.fit_transform(self.df[['Amount']])
+        normalized_cols = ['Amount', 'Normalized_Amount', 'Standard_Amount']
+        display(self.df[normalized_cols].head())
 
 
 
