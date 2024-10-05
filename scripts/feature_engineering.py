@@ -5,11 +5,16 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 class feature_engineering():
+    # Initialize the feature_engineering class by loading the dataset.   
     def __init__(self, filepath):
         self.df = pd.read_csv(filepath)
-        self.df.dropna(subset=['Value'], inplace=True)
 
     def aggregate_features(self):
+        """
+        Aggregate customer transaction data by CustomerId, calculating
+        total, average, count, and standard deviation of transaction amounts.
+        Display the top 20 customers based on total transaction amounts.
+        """
         customer_aggregate = self.df.groupby('CustomerId').agg(
             Total_transaction_amount = ('Amount', 'sum'),
             Average_transaction_amount = ('Amount', 'mean'),
@@ -28,6 +33,10 @@ class feature_engineering():
         plt.show()
 
     def extract_features(self):
+        """
+        Extract additional features from the TransactionStartTime column,
+        including transaction hour, day, month, and year.
+        """
 
         # Convert the TransactionStartTime column to datetime
         self.df['TransactionStartTime'] = pd.to_datetime(self.df['TransactionStartTime'])
@@ -41,6 +50,10 @@ class feature_engineering():
         display((self.df[['Transaction_Hour', 'Transaction_Day', 'Transaction_Month', 'Transaction_Year']]).head())
 
     def label_encoding(self):
+        """
+        Perform label encoding on categorical features: ProductCategory and CurrencyCode.
+        Display a sample of encoded columns and provide mappings of labels to encoded values.
+        """
         # Initialize the LabelEncoder
         le_product = LabelEncoder()
         le_currency = LabelEncoder()
@@ -70,13 +83,17 @@ class feature_engineering():
         display(currency_mapping.head())
 
     def normalize_numerical_feature(self):
+        """
+        Normalize and standardize the 'Amount' column using MinMaxScaler and StandardScaler.
+        Display a sample of the original, normalized, and standardized values.
+        """
         # Normalize and standardize numerical features
         scaler = MinMaxScaler()
         self.df['Normalized_Amount'] = scaler.fit_transform(self.df[['Amount']])
         # Normalize and standardize numerical features
         scaler = StandardScaler()
         self.df['Standardized_Amount'] = scaler.fit_transform(self.df[['Amount']])
-        normalized_cols = ['Amount', 'Normalized_Amount', 'Standard_Amount']
+        normalized_cols = ['Amount', 'Normalized_Amount', 'Standardized_Amount']
         display(self.df[normalized_cols].head())
 
 
