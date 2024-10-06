@@ -165,5 +165,10 @@ class feature_engineering_WoE():
         train_final = train.merge(train_woe, how='left', left_index=True, right_index=True)
         test_final = test.merge(test_woe, how='left', left_index=True, right_index=True)
 
-        return train_final, test_final
+        # Remove duplicates and rename columns
+        train_final = train_final.drop(['CustomerId_y', 'Label_y'], axis=1)
+        test_final = test_final.drop(['CustomerId_y', 'Label_y'], axis=1)
+        train_final = train_final.rename(columns={'CustomerId_x': 'CustomerId', 'Label_x': 'Label'})
+        test_final = test_final.rename(columns={'CustomerId_x': 'CustomerId', 'Label_x': 'Label'})
 
+        return train_final, test_final
