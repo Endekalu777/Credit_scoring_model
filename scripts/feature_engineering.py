@@ -4,7 +4,7 @@ from IPython.display import display
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-class feature_engineering():
+class feature_engineering_WoE():
     # Initialize the feature_engineering class by loading the dataset.   
     def __init__(self, filepath):
         self.df = pd.read_csv(filepath)
@@ -96,5 +96,32 @@ class feature_engineering():
         normalized_cols = ['Amount', 'Normalized_Amount', 'Standardized_Amount']
         display(self.df[normalized_cols].head())
 
-
-
+    def calculate_rfms(self):
+        # Calculate Recency, Frequency, Monetary, and Size (RFMS) metrics
+        latest_date = self.df['TransactionStartTime'].max()
+        rfms = self.df.groupby('CustomerId').agg({
+            'TransactionStartTime': lambda x: (latest_date - x.max()).days,  # Recency
+            'TransactionId': 'count',  # Frequency
+            'Amount': ['sum', 'mean']  # Monetary and Size
+        }).reset_index()
+        
+        rfms.columns = ['CustomerId', 'Recency', 'Frequency', 'Monetary', 'Size']
+        
+        # Normalize RFMS metrics
+        scaler = MinMaxScaler()
+        rfms[['Recency', 'Frequency', 'Monetary', 'Size']] = scaler.fit_transform(rfms[['Recency', 'Frequency', 'Monetary', 'Size']])
+        
+        # Calculate RFMS score
+        rfms['RFMS_Score'] = rfms[['Recency', 'Frequency', 'Monetary', 'Size']].sum(axis=1)
+        
+        # Classify customers into good or bad based on the median RFMS_Score
+        median_score = rfms['RFMS_Score'].median()
+        rfms['Label'] = (rfms['RFMS_Score'] >= median_score).astype(int)  # Good (1), Bad (0)
+        
+        # Visualization
+        top_customers = rfms.sort_values(by='RFMS_Score', ascending=False).head(20)
+        sns.barplot(x='RFMS_Score', y='CustomerId', data=top_customers)
+        plt.title('Top 20 Customers by RFMS Score')
+        plt.show()
+        
+        return rfms
