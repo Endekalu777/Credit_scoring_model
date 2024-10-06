@@ -1,5 +1,9 @@
 import pandas as pd
+import numpy as np
 from sklearn.preprocessing import LabelEncoder, MinMaxScaler, StandardScaler
+import scorecardpy as sc
+from monotonic_binning.monotonic_woe_binning import Binning
+from datetime import datetime
 from IPython.display import display
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -125,3 +129,41 @@ class feature_engineering_WoE():
         plt.show()
         
         return rfms
+    
+    def perform_woe_binning(self, rfms):
+        # Step 1: Split data into training and testing sets (70% train, 30% test)
+        train, test = sc.split_df(rfms, y='Label', ratio=0.7, seed=999).values()
+
+        # Step 2: Prepare features for WoE binning
+        features_for_woe = ['Recency', 'Frequency', 'Monetary', 'Size', 'RFMS_Score']
+
+        # Step 3: WoE binning using scorecardpy
+        bins_adj = sc.woebin(train, y='Label', x=features_for_woe, positive='bad|0')
+
+        # Step 4: Apply WoE binning to the training and test datasets
+        train_woe = sc.woebin_ply(train, bins_adj)
+        test_woe = sc.woebin_ply(test, bins_adj)
+
+        # Step 5: WoE Visualization (WoE plots for each feature)
+        for feature in features_for_woe:
+            if feature in bins_adj:
+                plt.figure(figsize=(12, 8))  # Adjusted figure size to make it clearer
+                sc.woebin_plot(bins_adj[feature])
+
+                # Customizing the plot for better aesthetics
+                plt.title(f'WoE Plot for {feature}', fontsize=6)  # Larger title font
+                plt.xlabel('Binned Values', fontsize=4)  # Larger x-axis label font
+                plt.ylabel('WoE', fontsize=6)  # Larger y-axis label font
+                plt.xticks(rotation=0, ha='right', fontsize=6)  # Rotate x-ticks for readability
+                plt.yticks(fontsize=5)  # Adjust y-tick font size
+                plt.grid(True, linestyle='--', alpha=0.7)  # Light grid lines for readability
+                plt.tight_layout(pad=3.0)  # Ensure no overlapping of elements
+                plt.show()
+                plt.close()
+
+        # Step 6: Merging the transformed WoE values back into the original datasets
+        train_final = train.merge(train_woe, how='left', left_index=True, right_index=True)
+        test_final = test.merge(test_woe, how='left', left_index=True, right_index=True)
+
+        return train_final, test_final
+
