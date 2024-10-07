@@ -25,25 +25,23 @@ class ModelSelectionAndTraining:
         self.y_train = train_final['Label']
         self.X_test = test_final.drop(columns=['CustomerId', 'Label', 'RFMS_Score', 'RFMS_Score_woe'])
         self.y_test = test_final['Label']
+        
+        # Initialize scaler and PCA
+        self.scaler = StandardScaler()
+        self.pca = PCA(n_components=0.95)
 
     def model_selection_and_training(self):
-        # Define pipelines for each model with scaling, PCA, and model fitting
+        # Fit the scaler and PCA on the training data
+        self.X_train_scaled = self.scaler.fit_transform(self.X_train)
+        self.X_train_pca = self.pca.fit_transform(self.X_train_scaled)
+        self.X_test_scaled = self.scaler.transform(self.X_test)
+        self.X_test_pca = self.pca.transform(self.X_test_scaled)
+
+        # Define pipelines for each model without scaling and PCA steps
         pipelines = {
-            'Logistic Regression': Pipeline([
-                ('scaler', StandardScaler()),
-                ('pca', PCA(n_components=0.95)),
-                ('classifier', LogisticRegression(class_weight='balanced', C=0.001, penalty='l2', solver='liblinear'))
-            ]),
-            'Decision Tree': Pipeline([
-                ('scaler', StandardScaler()),
-                ('pca', PCA(n_components=0.95)),
-                ('classifier', DecisionTreeClassifier(class_weight='balanced', max_depth=2, min_samples_leaf=10))
-            ]),
-            'Random Forest': Pipeline([
-                ('scaler', StandardScaler()),
-                ('pca', PCA(n_components=0.95)),
-                ('classifier', RandomForestClassifier(class_weight='balanced', max_depth=2, n_estimators=10, min_samples_leaf=10))
-            ])
+            'Logistic Regression': LogisticRegression(class_weight='balanced', C=0.001, penalty='l2', solver='liblinear'),
+            'Decision Tree': DecisionTreeClassifier(class_weight='balanced', max_depth=2, min_samples_leaf=10),
+            'Random Forest': RandomForestClassifier(class_weight='balanced', max_depth=2, n_estimators=10, min_samples_leaf=10)
         }
 
         # Set the MLflow tracking URI to a custom folder path
@@ -55,21 +53,21 @@ class ModelSelectionAndTraining:
         # Prepare to plot ROC curves
         plt.figure(figsize=(10, 8))
 
-        for name, pipeline in pipelines.items():
+        for name, model in pipelines.items():
             with mlflow.start_run(run_name=name):
                 print(f'Training {name}...')
 
-                # Train the model
-                pipeline.fit(self.X_train, self.y_train)
+                # Train the model on PCA-transformed data
+                model.fit(self.X_train_pca, self.y_train)
 
                 # Cross-validation
-                cv_scores = cross_val_score(pipeline, self.X_train, self.y_train, cv=5, scoring='accuracy')
+                cv_scores = cross_val_score(model, self.X_train_pca, self.y_train, cv=5, scoring='accuracy')
                 mlflow.log_metric('cv_accuracy', cv_scores.mean())
                 print(f'Cross-Validation Accuracy: {cv_scores.mean():.4f} ± {cv_scores.std():.4f}')
 
                 # Predictions and metrics calculation
-                y_pred = pipeline.predict(self.X_test)
-                y_pred_proba = pipeline.predict_proba(self.X_test)[:, 1]  # Get probabilities for ROC-AUC
+                y_pred = model.predict(self.X_test_pca)
+                y_pred_proba = model.predict_proba(self.X_test_pca)[:, 1]  # Get probabilities for ROC-AUC
                 
                 # Metrics
                 accuracy = accuracy_score(self.y_test, y_pred)
@@ -86,7 +84,7 @@ class ModelSelectionAndTraining:
                 mlflow.log_metric('roc_auc', roc_auc)
 
                 # Save the trained model as a PKL file
-                joblib.dump(pipeline, f'../models/{name.replace(" ", "_")}.pkl')
+                joblib.dump(model, f'../models/{name.replace(" ", "_")}.pkl')
                 print(f'Model {name} saved as PKL file.')
 
                 # Print metrics
@@ -112,3 +110,7 @@ class ModelSelectionAndTraining:
         plt.legend(loc='lower right')
         plt.grid(True)
         plt.show()
+
+        # Save the scaler and PCA models
+        joblib.dump(self.scaler, '../models/global_scaler.pkl')
+        joblib.dump(self.pca, '../models/global_pca.pkl')
