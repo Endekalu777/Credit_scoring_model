@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RFMS Prediction Results</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        table, th, td {
+            border: 1px solid black;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <h1>RFMS Data and Predictions</h1>
+
+    <h2>RFMS Data</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>RFMS Score</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in rfms_data %}
+            <tr>
+                <td>{{ row.RFMS_Score }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h2>Logistic Regression Predictions</h2>
+    <p>{{ predictions }}</p>
+
+    <a href="/">Submit Another Transaction</a>
+</body>
+</html>
