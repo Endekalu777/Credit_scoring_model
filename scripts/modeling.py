@@ -18,9 +18,9 @@ class ModelSelectionAndTraining:
         test_final = pd.read_csv(test_final_path)
         
         # Split into features and labels
-        self.X_train = train_final.drop(columns=['CustomerId', 'Label'])
+        self.X_train = train_final.drop(columns=['CustomerId', 'Label', 'RFMS_Score', 'RFMS_Score_woe'])
         self.y_train = train_final['Label']
-        self.X_test = test_final.drop(columns=['CustomerId', 'Label'])
+        self.X_test = test_final.drop(columns=['CustomerId', 'Label', 'RFMS_Score', 'RFMS_Score_woe'])
         self.y_test = test_final['Label']
 
     def model_selection_and_training(self):
