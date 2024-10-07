@@ -1,3 +1,5 @@
+# app/model_training.py
+
 import pandas as pd
 import matplotlib.pyplot as plt
 import mlflow
@@ -10,6 +12,7 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_sc
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 from sklearn.pipeline import Pipeline
+import joblib 
 
 class ModelSelectionAndTraining:
     def __init__(self, train_final_path, test_final_path):
@@ -82,8 +85,9 @@ class ModelSelectionAndTraining:
                 mlflow.log_metric('f1_score', f1)
                 mlflow.log_metric('roc_auc', roc_auc)
 
-                # Log the model in MLflow
-                mlflow.sklearn.log_model(pipeline, name)
+                # Save the trained model as a PKL file
+                joblib.dump(pipeline, f'../models/{name.replace(" ", "_")}.pkl')
+                print(f'Model {name} saved as PKL file.')
 
                 # Print metrics
                 print(f'Model: {name}')
