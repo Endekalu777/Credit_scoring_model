@@ -1,5 +1,7 @@
 import pandas as pd
 import matplotlib.pyplot as plt
+import mlflow
+import mlflow.sklearn
 from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
@@ -7,6 +9,7 @@ from sklearn.model_selection import cross_val_score
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score, roc_curve
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
+from sklearn.pipeline import Pipeline
 
 class ModelSelectionAndTraining:
     def __init__(self, train_final_path, test_final_path):
@@ -20,60 +23,82 @@ class ModelSelectionAndTraining:
         self.X_test = test_final.drop(columns=['CustomerId', 'Label'])
         self.y_test = test_final['Label']
 
-        # Feature Scaling
-        scaler = StandardScaler()
-        self.X_train = scaler.fit_transform(self.X_train)
-        self.X_test = scaler.transform(self.X_test)
-
-        # Optional: Reduce dimensionality with PCA
-        pca = PCA(n_components=0.95)  # Keep 95% of the variance
-        self.X_train = pca.fit_transform(self.X_train)
-        self.X_test = pca.transform(self.X_test)
-
     def model_selection_and_training(self):
-        # Define models with increased regularization and additional parameters for simplicity
-        models = {
-            'Logistic Regression': LogisticRegression(class_weight='balanced', C=0.001, penalty='l2', solver='liblinear'),
-            'Decision Tree': DecisionTreeClassifier(class_weight='balanced', max_depth=2, min_samples_leaf=10),
-            'Random Forest': RandomForestClassifier(class_weight='balanced', max_depth=2, n_estimators=10, min_samples_leaf=10)
+        # Define pipelines for each model with scaling, PCA, and model fitting
+        pipelines = {
+            'Logistic Regression': Pipeline([
+                ('scaler', StandardScaler()),
+                ('pca', PCA(n_components=0.95)),
+                ('classifier', LogisticRegression(class_weight='balanced', C=0.001, penalty='l2', solver='liblinear'))
+            ]),
+            'Decision Tree': Pipeline([
+                ('scaler', StandardScaler()),
+                ('pca', PCA(n_components=0.95)),
+                ('classifier', DecisionTreeClassifier(class_weight='balanced', max_depth=2, min_samples_leaf=10))
+            ]),
+            'Random Forest': Pipeline([
+                ('scaler', StandardScaler()),
+                ('pca', PCA(n_components=0.95)),
+                ('classifier', RandomForestClassifier(class_weight='balanced', max_depth=2, n_estimators=10, min_samples_leaf=10))
+            ])
         }
 
-        # Step 3: Train and evaluate each model
+        # Set the MLflow tracking URI to a custom folder path
+        mlflow.set_tracking_uri("../mlruns")
+
+        # Initialize MLflow
+        mlflow.set_experiment("Model Selection Experiment")
+
+        # Prepare to plot ROC curves
         plt.figure(figsize=(10, 8))
-        for name, model in models.items():
-            print(f'Training {name}...')
-            # Fit the model on the training data
-            model.fit(self.X_train, self.y_train)
 
-            # Step 4: Model evaluation with cross-validation
-            cv_scores = cross_val_score(model, self.X_train, self.y_train, cv=5, scoring='accuracy')
-            print(f'Cross-Validation Accuracy: {cv_scores.mean():.4f} ± {cv_scores.std():.4f}')
+        for name, pipeline in pipelines.items():
+            with mlflow.start_run(run_name=name):
+                print(f'Training {name}...')
 
-            # Step 5: Predictions and metrics calculation
-            y_pred = model.predict(self.X_test)
-            y_pred_proba = model.predict_proba(self.X_test)[:, 1]  # Get probabilities for ROC-AUC
+                # Train the model
+                pipeline.fit(self.X_train, self.y_train)
 
-            # Calculate metrics
-            accuracy = accuracy_score(self.y_test, y_pred)
-            precision = precision_score(self.y_test, y_pred, zero_division=0)
-            recall = recall_score(self.y_test, y_pred, zero_division=0)
-            f1 = f1_score(self.y_test, y_pred, zero_division=0)
-            roc_auc = roc_auc_score(self.y_test, y_pred_proba)
+                # Cross-validation
+                cv_scores = cross_val_score(pipeline, self.X_train, self.y_train, cv=5, scoring='accuracy')
+                mlflow.log_metric('cv_accuracy', cv_scores.mean())
+                print(f'Cross-Validation Accuracy: {cv_scores.mean():.4f} ± {cv_scores.std():.4f}')
 
-            # Print evaluation metrics
-            print(f'Model: {name}')
-            print(f'Accuracy: {accuracy:.4f}')
-            print(f'Precision: {precision:.4f}')
-            print(f'Recall: {recall:.4f}')
-            print(f'F1 Score: {f1:.4f}')
-            print(f'ROC AUC: {roc_auc:.4f}')
-            print('-' * 30)
+                # Predictions and metrics calculation
+                y_pred = pipeline.predict(self.X_test)
+                y_pred_proba = pipeline.predict_proba(self.X_test)[:, 1]  # Get probabilities for ROC-AUC
+                
+                # Metrics
+                accuracy = accuracy_score(self.y_test, y_pred)
+                precision = precision_score(self.y_test, y_pred, zero_division=0)
+                recall = recall_score(self.y_test, y_pred, zero_division=0)
+                f1 = f1_score(self.y_test, y_pred, zero_division=0)
+                roc_auc = roc_auc_score(self.y_test, y_pred_proba)
 
-            # Step 6: Plot ROC Curve
-            fpr, tpr, _ = roc_curve(self.y_test, y_pred_proba)
-            plt.plot(fpr, tpr, label=f'{name} (AUC = {roc_auc:.4f})')
+                # Log metrics to MLflow
+                mlflow.log_metric('accuracy', accuracy)
+                mlflow.log_metric('precision', precision)
+                mlflow.log_metric('recall', recall)
+                mlflow.log_metric('f1_score', f1)
+                mlflow.log_metric('roc_auc', roc_auc)
 
-        # Plot formatting
+                # Log the model in MLflow
+                mlflow.sklearn.log_model(pipeline, name)
+
+                # Print metrics
+                print(f'Model: {name}')
+                print(f'Accuracy: {accuracy:.4f}')
+                print(f'Precision: {precision:.4f}')
+                print(f'Recall: {recall:.4f}')
+                print(f'F1 Score: {f1:.4f}')
+                print(f'ROC AUC: {roc_auc:.4f}')
+                print('-' * 30)
+
+                # Plot ROC Curve
+                fpr, tpr, _ = roc_curve(self.y_test, y_pred_proba)
+                plt.plot(fpr, tpr, label=f'{name} (AUC = {roc_auc:.4f})')
+
+        # Plot formatting for ROC curves
         plt.plot([0, 1], [0, 1], 'k--', label='Random Guessing')  # Diagonal line for random guessing
         plt.xlim([0.0, 1.0])
         plt.ylim([0.0, 1.05])
@@ -83,4 +108,3 @@ class ModelSelectionAndTraining:
         plt.legend(loc='lower right')
         plt.grid(True)
         plt.show()
-
