@@ -65,9 +65,10 @@ Once your virtual environment is created and activated, install the required dep
 
 ```bash
 pip install -r requirements.txt
-
+```
 
 ## Project Structure
+```
 app/
 ├── models/
 │   ├── Decision_Tree.pkl
@@ -95,4 +96,20 @@ scripts/
 ├── .gitignore
 ├── Dockerfile
 └── .dockerignore
+```
 
+## Usage Instructions
+Once the dependencies are installed, you can run the analysis scripts as follows:
+
+- **Feature Engineering**: Run `feature_engineering.py` to preprocess the data and create features.
+- **Exploratory Data Analysis**: Execute `EDA.py` for initial data analysis and visualization.
+- **Model Training**: Execute `model_training.py` to train the credit scoring models and evaluate their performance.
+
+## Contributions
+Contributions are welcome! If you find any issues or have suggestions for improvement, feel free to create a pull request or open an issue.
+
+## License
+This project is licensed under the MIT License. See the LICENSE file for more details.
+
+## Contact
+For any questions or additional information, please contact [Endekalu Simon Haile](mailto:Endekalu.simon.haile@gmail.com).
