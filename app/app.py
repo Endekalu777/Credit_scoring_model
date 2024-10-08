@@ -46,4 +46,4 @@ def calculate_rfms():
                                prediction_data=prediction_table.to_dict(orient='records'),
                                transaction_data=df.to_dict(orient='records'))
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0')
