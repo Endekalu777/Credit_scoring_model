@@ -1,0 +1,11 @@
+pandas
+numpy
+matplotlib
+seaborn
+scikit-learn
+mlflow
+scorecardpy
+joblib
+monotonic-woe-binning
+scipy
+ipython
