@@ -65,5 +65,5 @@ site/
 .DS_Store
 Thumbs.db
 
-# mlflow run
+# ml runs
 mlruns/
