@@ -1,5 +1,3 @@
-# app/rfm_calculation.py
-
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import LabelEncoder, MinMaxScaler, StandardScaler
@@ -41,44 +39,54 @@ class FeatureEngineeringWoE:
         self.df['Standardized_Amount'] = scaler.fit_transform(self.df[['Amount']])
 
     def calculate_rfms(self):
-        latest_date = self.df['TransactionStartTime'].max()
+        latest_date = pd.to_datetime(self.df['TransactionStartTime']).max()
         rfms = self.df.groupby('CustomerId').agg({
-            'TransactionStartTime': lambda x: (latest_date - x.max()).days,
-            'TransactionId': 'count',
-            'Amount': ['sum', 'mean']
+            'TransactionStartTime': lambda x: (latest_date - pd.to_datetime(x).max()).days,  # Recency
+            'TransactionId': 'count',  # Frequency
+            'Amount': ['sum', 'mean']  # Monetary (sum) and Size (mean)
         }).reset_index()
 
+        # Rename columns
         rfms.columns = ['CustomerId', 'Recency', 'Frequency', 'Monetary', 'Size']
-        scaler = MinMaxScaler()
-        rfms[['Recency', 'Frequency', 'Monetary', 'Size']] = scaler.fit_transform(rfms[['Recency', 'Frequency', 'Monetary', 'Size']])
+        
+        # Store raw values (for reference if needed)
+        raw_rfms = rfms.copy()
+        
+        # Normalize only the 'Recency' column
+        min_val = rfms['Recency'].min()
+        max_val = rfms['Recency'].max()
+        if min_val == max_val:
+            rfms['Recency'] = 1  # If all values are the same, set them to 1
+        else:
+            rfms['Recency'] = (rfms['Recency'] - min_val) / (max_val - min_val)
+        
+        # Invert Recency so that lower values (more recent) get higher scores
+        rfms['Recency'] = 1 - rfms['Recency']
+        
+        # Calculate the RFMS score using raw 'Frequency', 'Monetary', 'Size' values
         rfms['RFMS_Score'] = rfms[['Recency', 'Frequency', 'Monetary', 'Size']].sum(axis=1)
+        
+        # Median score to label customers (binary classification)
         median_score = rfms['RFMS_Score'].median()
         rfms['Label'] = (rfms['RFMS_Score'] >= median_score).astype(int)
 
-        return rfms
+        return rfms, raw_rfms
 
     def perform_woe_binning(self, rfms):
-        # Step 1: Split data into training and testing sets (70% train, 30% test)
-        train, test = sc.split_df(rfms, y='Label', ratio=0.7, seed=999).values()
-
-        # Step 2: Prepare features for WoE binning
+        # Prepare features for WoE binning
         features_for_woe = ['Recency', 'Frequency', 'Monetary', 'Size', 'RFMS_Score']
 
-        # Step 3: WoE binning using scorecardpy
-        bins_adj = sc.woebin(train, y='Label', x=features_for_woe, positive='bad|0')
+        # WoE binning using scorecardpy
+        bins_adj = sc.woebin(rfms, y='Label', x=features_for_woe, positive='bad|0')
 
-        # Step 4: Apply WoE binning to the training and test datasets
-        train_woe = sc.woebin_ply(train, bins_adj)
-        test_woe = sc.woebin_ply(test, bins_adj)
+        # Apply WoE binning to the dataset
+        rfms_woe = sc.woebin_ply(rfms, bins_adj)
 
-        # Step 6: Merging the transformed WoE values back into the original datasets
-        train_final = train.merge(train_woe, how='left', left_index=True, right_index=True)
-        test_final = test.merge(test_woe, how='left', left_index=True, right_index=True)
+        # Merging the transformed WoE values back into the original dataset
+        final_data = rfms.merge(rfms_woe, how='left', left_index=True, right_index=True)
 
         # Remove duplicates and rename columns
-        train_final = train_final.drop(['CustomerId_y', 'Label_y'], axis=1)
-        test_final = test_final.drop(['CustomerId_y', 'Label_y'], axis=1)
-        train_final = train_final.rename(columns={'CustomerId_x': 'CustomerId', 'Label_x': 'Label'})
-        test_final = test_final.rename(columns={'CustomerId_x': 'CustomerId', 'Label_x': 'Label', 'Frequency_x': 'Frequency', 'Frequency_y': 'Frequency_woe'})
+        final_data = final_data.drop(['CustomerId_y', 'Label_y'], axis=1)
+        final_data = final_data.rename(columns={'CustomerId_x': 'CustomerId', 'Label_x': 'Label', 'Frequency_x': 'Frequency', 'Frequency_y': 'Frequency_woe'})
 
-        return train_final, test_final
+        return final_data

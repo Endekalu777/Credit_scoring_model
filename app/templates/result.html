@@ -1,53 +1,92 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RFMS Prediction Results</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 40px;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 20px;
-        }
-        table, th, td {
-            border: 1px solid black;
-        }
-        th, td {
-            padding: 8px;
-            text-align: left;
-        }
-        th {
-            background-color: #f2f2f2;
-        }
-    </style>
+    <title>RFM Results</title>
 </head>
 <body>
-    <h1>RFMS Data and Predictions</h1>
-
-    <h2>RFMS Data</h2>
-    <table>
-        <thead>
-            <tr>
-                <th>RFMS Score</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for row in rfms_data %}
-            <tr>
-                <td>{{ row.RFMS_Score }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
+    <h1>RFM Results</h1>
+    
+    <h2>Normalized RFM Analysis</h2>
+    <table border="1">
+        <tr>
+            <th>Customer ID</th>
+            <th>Recency</th>
+            <th>Frequency</th>
+            <th>Monetary</th>
+            <th>Size</th>
+            <th>RFMS Score</th>
+        </tr>
+        {% for customer in result_data %}
+        <tr>
+            <td>{{ customer.CustomerId }}</td>
+            <td>{{ customer.Recency }}</td>
+            <td>{{ customer.Frequency }}</td>
+            <td>{{ customer.Monetary }}</td>
+            <td>{{ customer.Size }}</td>
+            <td>{{ customer.RFMS_Score }}</td>
+        </tr>
+        {% endfor %}
     </table>
 
-    <h2>Logistic Regression Predictions</h2>
-    <p>{{ predictions }}</p>
+    <h2>Raw RFM Values</h2>
+    <table border="1">
+        <tr>
+            <th>Customer ID</th>
+            <th>Recency (days)</th>
+            <th>Frequency (transactions)</th>
+            <th>Monetary (total amount)</th>
+            <th>Size (average amount)</th>
+        </tr>
+        {% for customer in raw_rfms_data %}
+        <tr>
+            <td>{{ customer.CustomerId }}</td>
+            <td>{{ customer.Recency }}</td>
+            <td>{{ customer.Frequency }}</td>
+            <td>{{ customer.Monetary }}</td>
+            <td>{{ customer.Size }}</td>
+        </tr>
+        {% endfor %}
+    </table>
 
+    <h2>Predictions</h2>
+    <table border="1">
+        <tr>
+            <th>Customer ID</th>
+            <th>Prediction</th>
+            <th>Probability</th>
+        </tr>
+        {% for prediction in prediction_data %}
+        <tr>
+            <td>{{ prediction.CustomerId }}</td>
+            <td>{{ prediction.Prediction }}</td>
+            <td>{{ prediction.Probability }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <h2>Individual Transactions</h2>
+    <table border="1">
+        <tr>
+            <th>Customer ID</th>
+            <th>Transaction ID</th>
+            <th>Amount</th>
+            <th>Transaction Start Time</th>
+            <th>Product Category</th>
+            <th>Currency Code</th>
+        </tr>
+        {% for transaction in transaction_data %}
+        <tr>
+            <td>{{ transaction.CustomerId }}</td>
+            <td>{{ transaction.TransactionId }}</td>
+            <td>{{ transaction.Amount }}</td>
+            <td>{{ transaction.TransactionStartTime }}</td>
+            <td>{{ transaction.ProductCategory }}</td>
+            <td>{{ transaction.CurrencyCode }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+    
+    <br>
     <a href="/">Submit Another Transaction</a>
 </body>
 </html>

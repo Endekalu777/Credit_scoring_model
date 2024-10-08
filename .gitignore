@@ -64,3 +64,6 @@ site/
 # Operating system files
 .DS_Store
 Thumbs.db
+
+# ml runs
+mlruns/
