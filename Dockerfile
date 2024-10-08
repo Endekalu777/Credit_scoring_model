@@ -5,7 +5,10 @@ FROM python:3.12-slim
 WORKDIR /app
 
 # Copy only the requirements.txt first to leverage Docker caching
-COPY requirements.txt .
+COPY ../app/requirements.txt ./
+
+# Install setuptools to avoid pkg_resources error
+RUN apt-get update && apt-get install -y python3-setuptools
 
 # Create a virtual environment
 RUN python -m venv venv
